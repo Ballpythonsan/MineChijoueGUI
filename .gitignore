@@ -1,0 +1,4 @@
+chijoue.jar
+*.schem
+**/target
+**/.git
