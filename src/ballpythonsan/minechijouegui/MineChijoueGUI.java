@@ -7,11 +7,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStreamReader;
+import java.util.Properties;
 
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -26,10 +29,9 @@ import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
 
 public class MineChijoueGUI extends JFrame {
 
@@ -59,6 +61,88 @@ public class MineChijoueGUI extends JFrame {
 		contentPane.setBackground(Color.LIGHT_GRAY);
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 
+		//ここにおいておきたい---------
+
+		
+		JCheckBox chckbxNewCheckBox = new JCheckBox("代替設定を使用する");
+		chckbxNewCheckBox.setBackground(Color.WHITE);
+		chckbxNewCheckBox.setForeground(Color.BLACK);
+		
+		JTable substituteTable = new JTable(new DefaultTableModel(
+				new String[][] {
+					{"NONE", null},
+					{"GRASS", null},
+					{"SAND", null},
+					{"WOOL", null},
+					{"FIRE", null},
+					{"ICE", null},
+					{"METAL", null},
+					{"PLANT", null},
+					{"SNOW", null},
+					{"CLAY", null},
+					{"DIRT", null},
+					{"STONE", null},
+					{"WATER", null},
+					{"WOOD", null},
+					{"QUARTZ", null},
+					{"COLOR_ORANGE", null},
+					{"COLOR_MAGENTA", null},
+					{"COLOR_LIGHT_BLUE", null},
+					{"COLOR_YELLOW", null},
+					{"COLOR_LIGHT_GREEN", null},
+					{"COLOR_PINK", null},
+					{"COLOR_GRAY", null},
+					{"COLOR_LIGHT_GRAY", null},
+					{"COLOR_CYAN", null},
+					{"COLOR_PURPLE", null},
+					{"COLOR_BLUE", null},
+					{"COLOR_BROWN", null},
+					{"COLOR_GREEN", null},
+					{"COLOR_RED", null},
+					{"COLOR_BLACK", null},
+					{"GOLD", null},
+					{"DIAMOND", null},
+					{"LAPIS", null},
+					{"EMERALD", null},
+					{"PODZOL", null},
+					{"NETHER", null},
+					{"TERRACOTTA_WHITE", null},
+					{"TERRACOTTA_ORANGE", null},
+					{"TERRACOTTA_MAGENTA", null},
+					{"TERRACOTTA_LIGHT_BLUE", null},
+					{"TERRACOTTA_YELLOW", null},
+					{"TERRACOTTA_LIGHT_GREEN", null},
+					{"TERRACOTTA_PINK", null},
+					{"TERRACOTTA_GRAY", null},
+					{"TERRACOTTA_LIGHT_GRAY", null},
+					{"TERRACOTTA_CYAN", null},
+					{"TERRACOTTA_PURPLE", null},
+					{"TERRACOTTA_BLUE", null},
+					{"TERRACOTTA_BROWN", null},
+					{"TERRACOTTA_GREEN", null},
+					{"TERRACOTTA_RED", null},
+					{"TERRACOTTA_BLACK", null},
+					{"CRIMSON_NYLIUM", null},
+					{"CRIMSON_STEM", null},
+					{"CRIMSON_HYPHAE", null},
+					{"WARPED_NYLIUM", null},
+					{"WARPED_STEM", null},
+					{"WARPED_HYPHAE", null},
+					{"WARPED_WART_BLOCK", null},
+					{"DEEPSLATE", null},
+					{"RAW_IRON", null},
+					{"GLOW_LICHEN", null},
+				},
+				new String[] { "ColorID", "BlockID" }
+			) {
+				boolean[] columnEditables = new boolean[] { false, true };
+				public boolean isCellEditable(int row, int column) {
+					return columnEditables[column];
+				}
+			});
+		
+		//--------------------------
+		
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
 		
@@ -134,7 +218,27 @@ public class MineChijoueGUI extends JFrame {
 							inputPath.endsWith("jpeg") ||
 							inputPath.endsWith("bmp") ||
 							inputPath.endsWith("tiff")){
-						ProcessBuilder pb = new ProcessBuilder("java", "-jar", "./chijoue.jar", inputPath);
+						
+						//代替ブロック設定のボタンが押されていたら、
+						String substitutePath = "";
+						if (chckbxNewCheckBox.isSelected()) {
+							
+							substitutePath = "substitute.properties";
+							Properties properties = new Properties();
+							
+							TableModel model = substituteTable.getModel();
+							for (int i=0; i<model.getRowCount(); i++) {
+								
+								String tmp = (String) model.getValueAt(i, 1);
+								if (tmp != null && tmp != "") {
+									consoleLog.append((String) model.getValueAt(i, 0) + " --- " + tmp + "\n");
+									properties.setProperty(String.valueOf(i), tmp);
+								}
+							}
+							properties.store(new FileOutputStream(substitutePath), "");
+							
+						}
+						ProcessBuilder pb = new ProcessBuilder("java", "-jar", "./chijoue.jar", inputPath, substitutePath);
 						pb.redirectErrorStream(true);
 						Process process = pb.start();
 						
@@ -144,20 +248,14 @@ public class MineChijoueGUI extends JFrame {
 			            while ((line = reader.readLine()) != null) {
 			            	consoleLog.append(line + "\n");
 			            }
-			            
-			            // エラー出力の読み取り（必要に応じて）
-			            BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-			            String errorLine;
-			            while ((errorLine = errorReader.readLine()) != null) {
-			            	consoleLog.append("ERROR: " + errorLine + "\n");
-			            }
 
 			            consoleLog.append("wait process...\n");
 						int exitCode = process.waitFor();
 						consoleLog.append("Process finished with exit code: " + exitCode + "\n\n");
 					}
 		        } catch (Exception ex) {
-		            ex.printStackTrace();
+		        	consoleLog.append(ex + "\n");
+		            // ex.printStackTrace();
 		        }
 				return;
 			}
@@ -213,37 +311,7 @@ public class MineChijoueGUI extends JFrame {
 		
 		JScrollPane scrollPane_1 = new JScrollPane();
 		
-		DefaultTableModel tableModel = new DefaultTableModel(new Object[][] {
-            { "", "" }, { "", "" }, { "", "" }, { "", "" }, { "", "" },
-            { "", "" }, { "", "" }, { "", "" }, { "", "" }, { "", "" }
-        }, new Object[] { "Column 1", "Column 2" });
-		
-		JTable substituteTable = new JTable(tableModel);
 		scrollPane_1.setViewportView(substituteTable);
-		
-		tableModel.addTableModelListener(new TableModelListener() {
-            @Override
-            public void tableChanged(TableModelEvent e) {
-                if (e.getType() == TableModelEvent.UPDATE) {
-                    int lastRow = tableModel.getRowCount() - 1;
-                    boolean isLastRowFilled = true;
-
-                    // 最後の行がすべて埋まっているか確認
-                    for (int col = 0; col < tableModel.getColumnCount(); col++) {
-                        if (tableModel.getValueAt(lastRow, col) == null ||
-                            tableModel.getValueAt(lastRow, col).toString().trim().isEmpty()) {
-                            isLastRowFilled = false;
-                            break;
-                        }
-                    }
-
-                    // 最後の行が埋まっていたら新しい行を追加
-                    if (isLastRowFilled) {
-                        tableModel.addRow(new Object[] { "", "" });
-                    }
-                }
-            }
-        });
 		
 		GroupLayout gl_substitute = new GroupLayout(substitute);
 		gl_substitute.setHorizontalGroup(
@@ -251,7 +319,10 @@ public class MineChijoueGUI extends JFrame {
 				.addGroup(gl_substitute.createSequentialGroup()
 					.addContainerGap()
 					.addGroup(gl_substitute.createParallelGroup(Alignment.LEADING)
-						.addComponent(textPane, GroupLayout.PREFERRED_SIZE, 223, GroupLayout.PREFERRED_SIZE)
+						.addGroup(gl_substitute.createSequentialGroup()
+							.addComponent(textPane, GroupLayout.PREFERRED_SIZE, 223, GroupLayout.PREFERRED_SIZE)
+							.addPreferredGap(ComponentPlacement.RELATED)
+							.addComponent(chckbxNewCheckBox))
 						.addComponent(scrollPane_1, GroupLayout.PREFERRED_SIZE, 355, GroupLayout.PREFERRED_SIZE))
 					.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
 		);
@@ -259,10 +330,12 @@ public class MineChijoueGUI extends JFrame {
 			gl_substitute.createParallelGroup(Alignment.LEADING)
 				.addGroup(gl_substitute.createSequentialGroup()
 					.addContainerGap()
-					.addComponent(textPane, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-					.addPreferredGap(ComponentPlacement.UNRELATED)
+					.addGroup(gl_substitute.createParallelGroup(Alignment.LEADING, false)
+						.addComponent(chckbxNewCheckBox, 0, 0, Short.MAX_VALUE)
+						.addComponent(textPane, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+					.addPreferredGap(ComponentPlacement.RELATED, 55, Short.MAX_VALUE)
 					.addComponent(scrollPane_1, GroupLayout.PREFERRED_SIZE, 334, GroupLayout.PREFERRED_SIZE)
-					.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+					.addContainerGap())
 		);
 		substitute.setLayout(gl_substitute);
 		
