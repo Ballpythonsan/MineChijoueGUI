@@ -2,3 +2,4 @@ chijoue.jar
 *.schem
 **/target
 **/.git
+/bin/
